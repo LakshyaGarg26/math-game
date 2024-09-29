@@ -1,6 +1,7 @@
+// Asteroid.tsx
 'use client';
 
-import React, { memo } from 'react';
+import React from 'react';
 
 type AsteroidProps = {
   equation: string;
@@ -37,7 +38,7 @@ const Asteroid: React.FC<AsteroidProps> = ({
         top: '-100px', // Start position above the screen
         animation: blasted
           ? `blast 0.5s forwards`
-          : `fall 5s linear ${delay}s forwards`,
+          : `fall 8s linear ${delay}s forwards`, // Adjust fall duration
         width: `${asteroidSize}px`, // Dynamic asteroid size
         height: `${asteroidSize}px`, // Dynamic asteroid size
       }}
@@ -68,4 +69,4 @@ const Asteroid: React.FC<AsteroidProps> = ({
 };
 
 // Use memo to prevent unnecessary re-renders
-export default memo(Asteroid);
+export default React.memo(Asteroid);
