@@ -1,4 +1,5 @@
-// /components/AnswerInput.tsx
+'use client';
+
 import React from 'react';
 
 type AnswerInputProps = {
@@ -22,4 +23,3 @@ const AnswerInput: React.FC<AnswerInputProps> = ({ userInput, onChange }) => {
 };
 
 export default AnswerInput;
-

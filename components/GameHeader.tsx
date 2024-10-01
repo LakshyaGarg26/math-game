@@ -1,4 +1,5 @@
-// /components/GameHeader.tsx
+'use client';
+
 import React from 'react';
 
 type GameHeaderProps = {
@@ -9,9 +10,9 @@ type GameHeaderProps = {
 const GameHeader: React.FC<GameHeaderProps> = ({ score, lives }) => {
   return (
     <div className="absolute top-4 right-4 text-white text-xl font-bold">
-      <p>Score: {score}</p>
+      Score: {score}
       <p>
-        <span className="font-bold">{'⭐'.repeat(lives)}</span>
+        Lives: <span className="font-bold">{'⭐'.repeat(lives)}</span>
       </p>
     </div>
   );

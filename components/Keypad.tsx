@@ -1,4 +1,5 @@
-// /components/Keypad.tsx
+'use client';
+
 import React from 'react';
 
 type KeypadProps = {

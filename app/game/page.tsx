@@ -1,53 +1,47 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import Asteroid from '../../components/Asteroid';
+import FallingObjectsField from '../../components/FallingObjectsField';
 import Keypad from '../../components/Keypad';
 import AnswerInput from '../../components/AnswerInput';
 import GameHeader from '../../components/GameHeader';
-import AsteroidField from '../../components/AsteroidField';
-
-type AsteroidDrop = {
-  equation: string;
-  answer: number;
-  id: number;
-  leftPosition: number;
-  blasted: boolean;
-};
+import themes from '../../config/themes';
+import { FallingObjectDrop } from '../../types';
 
 const GamePage = () => {
-  const [asteroids, setAsteroids] = useState<AsteroidDrop[]>([]);
+  const [fallingObjects, setFallingObjects] = useState<FallingObjectDrop[]>([]);
   const [userInput, setUserInput] = useState('');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [gameOver, setGameOver] = useState(false);
   const [dropInterval, setDropInterval] = useState<number>(2500);
   const [gameWidth, setGameWidth] = useState<number>(600);
-  const [asteroidSize, setAsteroidSize] = useState<number>(80);
+  const [fallingObjectSize, setFallingObjectSize] = useState<number>(80);
+  const selectedTheme = themes; // Default theme (change to themes.forest for a forest theme)
 
-  // Function to calculate and set game width and asteroid size based on screen size
+  // Function to calculate and set game width and falling object size based on screen size
   const updateGameDimensions = () => {
     const screenWidth = window.innerWidth;
     if (screenWidth >= 300 && screenWidth <= 500) {
       setGameWidth(screenWidth);
-      setAsteroidSize(60);
+      setFallingObjectSize(60);
     } else if (screenWidth < 900) {
       setGameWidth(500);
-      setAsteroidSize(70);
+      setFallingObjectSize(70);
     } else {
       setGameWidth(700);
-      setAsteroidSize(80);
+      setFallingObjectSize(80);
     }
   };
 
   useEffect(() => {
     updateGameDimensions();
     window.addEventListener('resize', updateGameDimensions);
-
     return () => window.removeEventListener('resize', updateGameDimensions);
   }, []);
 
-  const generateAsteroid = (): AsteroidDrop => {
+  // Function to generate random math equations for falling objects
+  const generateFallingObject = (): FallingObjectDrop => {
     const num1 = Math.floor(Math.random() * 20) + 1;
     const num2 = Math.floor(Math.random() * 20) + 1;
     const operations = ['+', '-', '*', '/'];
@@ -81,42 +75,44 @@ const GamePage = () => {
         break;
     }
 
-    const leftPosition = Math.random() * (gameWidth - asteroidSize);
+    const leftPosition = Math.random() * (gameWidth - fallingObjectSize);
     return { equation, answer, id: Date.now(), leftPosition, blasted: false };
   };
 
-  const dropAsteroid = useCallback(() => {
-    const newAsteroid = generateAsteroid();
-    setAsteroids((prev) => [...prev, newAsteroid]);
-  }, [asteroidSize, gameWidth]);
+  // Function to drop new falling objects at intervals
+  const dropFallingObject = useCallback(() => {
+    const newFallingObject = generateFallingObject();
+    setFallingObjects((prev) => [...prev, newFallingObject]);
+  }, [fallingObjectSize, gameWidth]);
 
+  // Adjust the drop interval based on the player's score
   useEffect(() => {
     const pointsMilestone = Math.floor(score / 2000);
     const newInterval = Math.max(400, 2500 - pointsMilestone * 100);
     setDropInterval(newInterval);
   }, [score]);
 
-  // Blast the asteroid when the correct answer is entered
-  const blastAsteroid = (asteroidId: number) => {
-    setAsteroids((prev) =>
-      prev.map((asteroid) =>
-        asteroid.id === asteroidId ? { ...asteroid, blasted: true } : asteroid
+  // Blast the falling object when the correct answer is entered
+  const blastFallingObject = (fallingObjectId: number) => {
+    setFallingObjects((prev) =>
+      prev.map((fallingObject) =>
+        fallingObject.id === fallingObjectId ? { ...fallingObject, blasted: true } : fallingObject
       )
     );
     setTimeout(() => {
-      setAsteroids((prev) => prev.filter((asteroid) => asteroid.id !== asteroidId));
-    }, 500); // Delay to remove after showing blast effect
+      setFallingObjects((prev) => prev.filter((fallingObject) => fallingObject.id !== fallingObjectId));
+    }, 500);
   };
 
-  // Only decrement lives if the asteroid hasn't been blasted
-  const handleMissedAsteroid = useCallback(
-    (asteroidId: number) => {
-      const missedAsteroid = asteroids.find((asteroid) => asteroid.id === asteroidId);
-      if (missedAsteroid && !missedAsteroid.blasted) {
-        // Remove the asteroid from the list
-        setAsteroids((prev) => prev.filter((asteroid) => asteroid.id !== asteroidId));
+  // Handle when a falling object reaches the bottom without being blasted
+  const handleMissedFallingObject = useCallback(
+    (fallingObjectId: number) => {
+      setFallingObjects((prev) => prev.filter((fallingObject) => fallingObject.id !== fallingObjectId));
 
-        // Decrease lives if asteroid is missed
+      const missedFallingObject = fallingObjects.find(
+        (fallingObject) => fallingObject.id === fallingObjectId
+      );
+      if (missedFallingObject && !missedFallingObject.blasted) {
         if (lives > 1) {
           setLives((prevLives) => prevLives - 1);
         } else {
@@ -125,40 +121,45 @@ const GamePage = () => {
         }
       }
     },
-    [lives, asteroids]
+    [lives, fallingObjects]
   );
 
+  // Handle user input changes
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserInput(value);
   };
 
+  // Handle keypad input
   const handleKeypadInput = (value: string) => {
     setUserInput((prevInput) => prevInput + value);
   };
 
+  // Handle backspace
   const handleBackspace = () => {
     setUserInput((prevInput) => prevInput.slice(0, -1));
   };
 
+  // Handle form submission
   const handleSubmit = () => {
-    const correctAsteroid = asteroids.find(
-      (asteroid) => asteroid.answer === parseInt(userInput)
+    const correctFallingObject = fallingObjects.find(
+      (fallingObject) => fallingObject.answer === parseInt(userInput)
     );
 
-    if (correctAsteroid) {
+    if (correctFallingObject) {
       setScore((prevScore) => prevScore + 500);
-      blastAsteroid(correctAsteroid.id);
+      blastFallingObject(correctFallingObject.id);
     }
     setUserInput('');
   };
 
+  // Drop new falling objects at regular intervals
   useEffect(() => {
     if (!gameOver) {
-      const interval = setInterval(dropAsteroid, dropInterval);
+      const interval = setInterval(dropFallingObject, dropInterval);
       return () => clearInterval(interval);
     }
-  }, [dropInterval, gameOver, dropAsteroid]);
+  }, [dropInterval, gameOver, dropFallingObject]);
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-start bg-black">
@@ -167,18 +168,19 @@ const GamePage = () => {
           className="relative h-full overflow-hidden border border-black"
           style={{
             width: `${gameWidth}px`,
-            backgroundImage: `url("/images/space-theme.jpg")`,
+            backgroundImage: `url(${selectedTheme.backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
           <GameHeader score={score} lives={lives} />
 
-          <AsteroidField
-            asteroids={asteroids}
-            asteroidSize={asteroidSize}
+          <FallingObjectsField
+            fallingObjects={fallingObjects}
+            fallingObjectSize={fallingObjectSize}
             gameWidth={gameWidth}
-            onMissedAsteroid={handleMissedAsteroid}
+            onMissedFallingObject={handleMissedFallingObject}
+            selectedTheme={selectedTheme}
           />
 
           {gameOver && (
